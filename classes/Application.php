@@ -168,7 +168,9 @@ class Application extends ActiveRecord
 	 */
 	public function getURL()
 	{
-		return BASE_URL.'/applications/viewApplication.php?application_id='.$this->id;
+		$url = new URL(BASE_URL.'/applications/viewApplication.php');
+		$url->application_id = $this->id;
+		return $url;
 	}
 	/**
 	 * Adds a new log entry to the database
@@ -206,5 +208,33 @@ class Application extends ActiveRecord
 		$query->execute(array($this->id));
 		$result = $query->fetchAll(PDO::FETCH_ASSOC);
 		return $result;
+	}
+
+	/**
+	 * Returns all the log entries for this application matching any fields given
+	 * @param array $fields
+	 */
+	public function getEntries($fields=null)
+	{
+		$options[] = 'application_id=?';
+		$parameters[] = $this->id;
+
+		if (is_array($fields)) {
+			if (array_key_exists('script',$fields)) {
+				$options[] = 'script=?';
+				$parameters[] = $fields['script'];
+			}
+			if (array_key_exists('timestamp',$fields)) {
+				$options[] = 'timestamp=from_unixtime(?)';
+				$parameters[] = $fields['timestamp'];
+			}
+		}
+		$options = implode(' and ',$options);
+
+		$sql = "select * from entries where $options order by timestamp desc";
+		$pdo = Database::getConnection();
+		$query = $pdo->prepare($sql);
+		$query->execute($parameters);
+		return $query->fetchAll(PDO::FETCH_ASSOC);
 	}
 }

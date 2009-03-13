@@ -40,7 +40,3 @@ if (userHasRole('Administrator')) {
 	?>
 	</table>
 </div>
-<?php
-// Intionally caused error to test skidder posting
-echo NONEXISTENT_CONSTANT;
-?>
