@@ -201,6 +201,8 @@ a.previous { width:16px; height:16px; background-image:url('images/buttons/previ
 a.next { width:16px; height:16px; background-image:url('images/buttons/next.png'); }
 a.first { width:22px; height:22px; background-image:url('images/buttons/player_start.png'); }
 a.last { width:22px; height:22px; background-image:url('images/buttons/player_end.png'); }
+a.subscribe { width:22px; height:22px; background-image:url('images/buttons/mail_get.png'); }
+a.unsubscribe { width:22px; height:22px; background-image:url('images/buttons/mail_delete.png'); }
 
 
 

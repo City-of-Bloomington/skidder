@@ -52,11 +52,21 @@ create table entries (
 	key (type)
 ) engine=InnoDB;
 
-create table notificationList (
+create table subscriptions (
 	id int unsigned not null primary key auto_increment,
 	application_id int unsigned not null,
 	person_id int unsigned not null,
+	waitTime int unsigned not null default 0,
 	unique (application_id,person_id),
 	foreign key (application_id) references applications(id),
 	foreign key (person_id) references people(id)
-)engine=InnoDB;
+) engine=InnoDB;
+
+create table notifications (
+	subscription_id int unsigned not null,
+	script varchar(255) not null,
+	timestamp timestamp not null default CURRENT_TIMESTAMP,
+	primary key (subscription_id,script),
+	foreign key (subscription_id) references subscriptions(id),
+	foreign key (script) references entries(script)
+) engine=InnoDB;

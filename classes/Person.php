@@ -13,6 +13,7 @@ class Person extends ActiveRecord
 
 	private $user_id;
 	private $user;
+
 	/**
 	 * This will load all fields in the table as properties of this class.
 	 * You may want to replace this with, or add your own extra, custom loading
@@ -208,6 +209,28 @@ class Person extends ActiveRecord
 	public function getUsername() {
 		if ($this->getUser()) {
 			return $this->getUser()->getUsername();
+		}
+	}
+
+	/**
+	 * @return boolean
+	 */
+	public function hasSubscription(Application $application)
+	{
+		$list = new SubscriptionList(array('application_id'=>$application->getId(),
+										   'person_id'=>$this->id));
+		return count($list) ? true : false;
+	}
+
+	/**
+	 * @return Subscription
+	 */
+	public function getSubscription(Application $application)
+	{
+		$list = new SubscriptionList(array('application_id'=>$application->getId(),
+										   'person_id'=>$this->id));
+		if (count($list)) {
+			return $list[0];
 		}
 	}
 }

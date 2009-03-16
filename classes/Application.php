@@ -178,6 +178,7 @@ class Application extends ActiveRecord
 	 * 		$post['script']
 	 * 		$post['type']
 	 * 		$post['message']
+	 * 	@return string The MySQL-formatted timestamp for this log entry
 	 */
 	public function log($post)
 	{
@@ -191,6 +192,11 @@ class Application extends ActiveRecord
 		$pdo = Database::getConnection();
 		$query = $pdo->prepare('insert entries values(?,now(),?,?,?)');
 		$query->execute(array($this->id,$script,$type,$message));
+
+		$query = $pdo->prepare('select max(timestamp) as timestamp from entries where application_id=?');
+		$query->execute(array($this->id));
+		$result = $query->fetchAll(PDO::FETCH_ASSOC);
+		return $result[0]['timestamp'];
 	}
 
 	/**
@@ -211,8 +217,19 @@ class Application extends ActiveRecord
 	}
 
 	/**
-	 * Returns all the log entries for this application matching any fields given
+	 * Returns a query containing the log entries for this application matching any fields given
+	 *
+	 * You must fetch each row from the returned query one at a time.  Since these queries
+	 * are unbuffered you cannot do any other database calls until you call $query->closeCursor()
+	 *
+	 * We are returning a query, instead of a result set, since the data returned can be very
+	 * large.  There is usually not enough memory in PHP to handle the entire result at once.
+	 * It is up to you to go through the query, one row at a time, and do something with each
+	 * row.  Remember to close the query when you're done, or you won't be able to do any other
+	 * database work.
+	 *
 	 * @param array $fields
+	 * @return PDOStatement
 	 */
 	public function getEntries($fields=null)
 	{
@@ -235,6 +252,61 @@ class Application extends ActiveRecord
 		$pdo = Database::getConnection();
 		$query = $pdo->prepare($sql);
 		$query->execute($parameters);
-		return $query->fetchAll(PDO::FETCH_ASSOC);
+		return $query;
+	}
+	/**
+	 * @return int
+	 */
+	public function getEntryCount()
+	{
+		$pdo = Database::getConnection();
+		$query = $pdo->prepare('select count(*) as count from entries where application_id=?');
+		$query->execute(array($this->id));
+		$result = $query->fetchAll(PDO::FETCH_ASSOC);
+		return $result[0]['count'];
+	}
+
+	/**
+	 * Returns all the subscriptions for this application
+	 * @return SubscriptionList
+	 */
+	public function getSubscriptions()
+	{
+		return new SubscriptionList(array('application_id'=>$this->id));
+	}
+
+	/**
+	 * Purges the logs from the system
+	 *
+	 * @param string $script
+	 * @param int $timestamp A Unix Timestamp
+	 */
+	public function deleteEntries($script=null,$timestamp=null)
+	{
+		$notificationSQL = "delete from notifications
+							where subscription_id in
+							(select id from subscriptions where application_id=?)";
+		$entriesSQL = "delete from entries where application_id=?";
+
+		$parameters[] = $this->id;
+
+		if ($script) {
+			$notificationSQL.= ' and script=?';
+			$entriesSQL.= ' and script=?';
+			$parameters[] = $script;
+		}
+		if ($timestamp) {
+			$notificationSQL.= ' and timestamp=?';
+			$entriesSQL.= ' and timestamp=?';
+			$parameters[] = date('Y-m-d H:i:s',$timestamp);
+		}
+
+		$pdo = Database::getConnection();
+
+		$query = $pdo->prepare($notificationSQL);
+		$query->execute($parameters);
+
+		$query = $pdo->prepare($entriesSQL);
+		$query->execute($parameters);
 	}
 }

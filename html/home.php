@@ -8,8 +8,22 @@ if (isset($_POST['application_id'])) {
 	try {
 		$application = new Application($_POST['application_id']);
 		if ($application->getIp_address() == $_SERVER['REMOTE_ADDR']) {
-			$application->log($_POST);
+			$timestamp = $application->log($_POST);
 			header('HTTP/1.1 201 Created');
+
+			$_POST['timestamp'] = $timestamp;
+			$template = new Template('default','txt');
+			$template->blocks[] = new Block('applications/applicationInfo.inc',
+											array('application'=>$application));
+			$template->blocks[] = new Block('applications/entryFullDisplay.inc',
+											array('entries'=>array($_POST)));
+			$message = $template->render();
+
+			foreach ($application->getSubscriptions() as $subscriber) {
+				if ($subscriber->wantsNotification($_POST['script'])) {
+					$subscriber->notify($_POST['script'],$message);
+				}
+			}
 		}
 		else {
 			throw new Exception('notAllowed');

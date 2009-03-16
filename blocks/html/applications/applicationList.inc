@@ -21,6 +21,7 @@
 		<tr><th></th>
 			<th>Name</th>
 			<th>IP Address</th>
+			<th>Errors</th>
 		</tr>
 		<?php
 			foreach ($this->applicationList as $application) {
@@ -36,6 +37,7 @@
 				<tr><td>$editButton</td>
 					<td><a href=\"{$application->getURL()}\">$name</a></td>
 					<td>{$application->getIp_address()}</td>
+					<td>{$application->getEntryCount()}</td>
 				</tr>
 				";
 			}

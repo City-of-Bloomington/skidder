@@ -387,4 +387,20 @@ class User extends SystemUser
 		$result = $query->fetchAll();
 		return count($result) ? true : false;
 	}
+
+	/**
+	 * @return boolean
+	 */
+	public function hasSubscription(Application $application)
+	{
+		return $this->getPerson()->hasSubscription($application);
+	}
+
+	/**
+	 * @return Subscription
+	 */
+	public function getSubscription(Application $application)
+	{
+		return $this->getPerson()->getSubscription($application);
+	}
 }
