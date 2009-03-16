@@ -40,11 +40,7 @@ if (isset($_POST['application_id'])) {
 	}
 }
 else {
-	if (isset($_SESSION['USER'])) {
-		include APPLICATION_HOME.'/html/applications/home.php';
-	}
-	else {
-		$template = new Template();
-		echo $template->render();
-	}
+	$template = new Template();
+	$template->blocks[] = new Block('about.inc');
+	echo $template->render();
 }

@@ -3,6 +3,7 @@
 		<?php
 			if (isset($_SESSION['USER'])) {
 				echo "
+				<li><a href=\"".BASE_URL."/applications\">Applications</a></li>
 				<li><a href=\"".BASE_URL."/subscriptions\">Subscriptions</a></li>
 				<li><a href=\"".BASE_URL."/login/logout.php\">Logout</a></li>
 				";
