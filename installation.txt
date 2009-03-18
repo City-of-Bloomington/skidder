@@ -12,34 +12,26 @@ Contents
 ---------------------------------------------------------------------
 About
 ---------------------------------------------------------------------
-	This scaffolding is really just a template for our web
-applications.  It provides us the basics to get a web application up
-and running very quickly.  It also means our applications will be
-relatively uniform and easier to extend and maintain down the road.
-	While not fully MVC, it has borrowed ideas from Rails
-and Struts.  It has developed over time, and will continue to develop
-as we come across better solutions to problems run into while creating
-new applications.
+	Skidder is primarily intended as an error notification system.
+You register applications in Skidder, allowing them to post errors.
+Then, you can subscribe to Skidder's notifications for that application.
+Skidder allows you to control how frequently notifications for the same
+error will be sent.  Log entries will be stored in Skidder and can be
+browsed and purged on the website.
+
+	While it was built with error notifications in mind, it can be
+used for any kind of notifications or log entries desired.  It's up to
+the users of Skidder to post log entries that they want notifications
+from.
 
 ---------------------------------------------------------------------
 Copyright
 ---------------------------------------------------------------------
-	This scaffolding is written and copyrighted by the
+	Skidder is written and copyrighted by the
 City of Bloomington, IN.  It is being released as free software;
 you can redistribute it and/or modify it under the terms of the
 GNU Affero General Public License as published by the Free Software Foundation;
 either version 3 of the License, or (at your option) any later version.
-
-	This scaffolding includes code generators to create classes to
-work with your database.  While the generators fall under the GPL,
-any code you generate with them belongs to you.  However, we highly
-encourage you to uphold the values of Free Software and release your
-application as Free Software as well.
-
-	In any case, you own the copyright to any generated code and should
-edit the copyright statement in the configuration. This will be the
-copyright statement that will be included in all generated code.
-
 
 ---------------------------------------------------------------------
 Requirements
@@ -50,7 +42,7 @@ It ships with a working version of framework installed in /libraries.
 In the configuration, you can point the application to another copy
 of the framework, if you like.  If you make changes to the code in
 the /libraries/framework, you might consider sending those changes
-back to us, so we can improve this scaffolding.
+back to us, so we can improve our scaffolding.
 
 This application was written assuming you have control over your own web
 server.  If you are on a hosted system, you may need to make changes to
@@ -93,11 +85,22 @@ curl requirement.
 ---------------------------------------------------------------------
 Installation
 ---------------------------------------------------------------------
-	This scaffolding is essentially a working web application that is
-ready to be extended.  It has authentication and user management
-already built.
+Server Configuration
+	We need to allow for large POST.  If you want applications to be able
+to send large ( >1M ) log entries,  some server-side values need to be set:
+	PHP post_max_size:
+		This is set in PHP.ini, but you can also set them in the httpd.conf,
+		or in the configuration.inc.  The default value is usually 8M, which
+		should be large enough for most cases.
+	MySQL max_allowed_packet:
+		This is the largest string PHP can send to MySQL, and is set in the
+		my.cnf file. The default value is usually only 1M, and is usually the
+		limiting factor in getting large log messages to POST correctly.
 
-	The best way is to have PHP auto_prepend the configuration.inc.
+Put the web application somewhere accessible by Apache.
+
+	All of the application's settings are set in configuration.inc.
+The best way is to have PHP auto_prepend the configuration.inc.
 If this is the only web application on your apache server, you can just point
 your apache's web directory to the html directory inside the application and
 edit the auto_prepend in your php.ini file.
@@ -127,6 +130,39 @@ this application's html directory with the php_value line from above.
 add an include() command to the top of every last PHP script in the html directory.
 
 ---------------------------------------------------------------------
+Create Database
+---------------------------------------------------------------------
+If you don't already have a database set up, you will need to create one.
+It's recommended to create a database user for this application that will
+only have access to the database for this application.  Here are the commands
+to create the database and set up a user in MySQL:
+
+mysql> create database skidder;
+mysql> grant all privileges on skidder.* to username@localhost identified by 'password';
+mysql> flush privileges;
+
+---------------------------------------------------------------------
 Configuration
 ---------------------------------------------------------------------
 	Edit configuration.inc with appropriate values for your installation.
+This will include where you installed the application, and the username and
+password for the database user you created.
+
+---------------------------------------------------------------------
+Load Initial Database
+---------------------------------------------------------------------
+Skidder ships with an SQL script to create the database tables,
+and load some initial data.  You can pass this file directly to MySQL.
+
+cd /path/to/skidder/scripts
+mysql -u username -p password skidder < mysql.sql
+
+---------------------------------------------------------------------
+-- Log in as the admin
+---------------------------------------------------------------------
+The initial database script will create an admin user. You can log in initially
+as admin:admin.  Once you log in, you should change the admin password, as well
+as modifying the administrator user to whatever you like.
+
+Users with the Administrator role can create user accounts and register
+applications.
