@@ -190,8 +190,17 @@ class Application extends ActiveRecord
 		}
 
 		$pdo = Database::getConnection();
+
+		// These are split out this way to make it easier to add in
+		// anything we might need to do to support large $messages
+		// If MySQL max_allowed_packet is too small, I'm still not sure
+		// what we can do.
 		$query = $pdo->prepare('insert entries values(?,now(),?,?,?)');
-		$query->execute(array($this->id,$script,$type,$message));
+		$query->bindParam(1,$this->id);
+		$query->bindParam(2,$script);
+		$query->bindParam(3,$type);
+		$query->bindParam(4,$message);
+		$query->execute();
 
 		$query = $pdo->prepare('select max(timestamp) as timestamp from entries where application_id=?');
 		$query->execute(array($this->id));
