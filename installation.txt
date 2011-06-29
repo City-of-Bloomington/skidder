@@ -117,17 +117,31 @@ Alias /application_name "/path/to/application_name/html"
     Order allow,deny
     Allow from all
 
-        php_value auto_prepend_file /path/to/application_name/configuration.inc
+	php_value auto_prepend_file /path/to/application_name/configuration.inc
 </Directory>
 
+---------------------------------------------------------------------
+ Securing the user accounts and sessions
+---------------------------------------------------------------------
+	Any web application is going to need users to log in, and for
+sessions to be kept track of.  Sessions are cookies handed out to the
+browser.
+	For the purposes of hacking into a person's account, these cookies
+are just as good as a username and password.  If someone steals the
+cookie by sniffing traffic, they can use the cookie to log themselves
+in as that user.
+	Making sure the cookies only get used over SSL is the safe way to
+keep track of sessions.  The default configuration file now only sets
+cookies over SSL.  Also, the BASE_URL is set to keep them on HTTPS
+once they're logged in.
+	All that's left is to edit Apache configuration to rewrite people
+over to SSL when they go to log in.
 
-	If you're running in a shared hosting environment, you cannot do Alias or
-Directory commands.  However the html can be moved into your web directory.
-To make sure the configuration file gets loaded, create an htaccess file in
-this application's html directory with the php_value line from above.
-
-	If you cannot edit your httpd.conf or use htaccess files, you will need to
-add an include() command to the top of every last PHP script in the html directory.
+<Directory "/path/to/application_name/html/login">
+    RewriteEngine On
+    RewriteCond   %{SERVER_PORT}  !^443$
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}/skidder/login/$1
+</Directory>
 
 ---------------------------------------------------------------------
 Create Database

@@ -26,8 +26,10 @@ define('FRAMEWORK',APPLICATION_HOME.'/libraries/framework');
 /**
  * The URL to get to this site
  * Do NOT use a trailing slash
+ * output https:// urls when the site is accessed through https
  */
-define('BASE_URL','http://localhost');
+$protocol = (!defined('STDIN') && $_SERVER['SERVER_PORT']==443) ? 'https' : 'http';
+define('BASE_URL',"$protocol://apps.bloomington.in.gov/skidder");
 
 /**
  * Used when there's an error on the site.  The Framework will
@@ -96,8 +98,10 @@ include FRAMEWORK.'/globalFunctions.php';
  * Session Startup
  * Don't start a session for CLI usage.
  * We only want sessions when PHP code is executed from the webserver
+ * We always want to make sure that the cookie is encrypted
  */
-if (!defined('STDIN')) {
+if (!defined('STDIN') && $_SERVER['SERVER_PORT']==443) {
 	ini_set('session.save_path',APPLICATION_HOME.'/data/sessions');
+	ini_set('session.cookie_secure',true);
 	session_start();
 }
