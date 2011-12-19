@@ -1,6 +1,6 @@
 <?php
 /**
- * @copyright 2006-2008 City of Bloomington, Indiana
+ * @copyright 2006-2011 City of Bloomington, Indiana
  * @license http://www.gnu.org/licenses/agpl.txt GNU/AGPL, see LICENSE.txt
  * @author Cliff Ingham <inghamn@bloomington.in.gov>
  */
@@ -15,6 +15,14 @@ class User extends SystemUser
 	private $person;
 	private $roles = array();
 	private $newPassword; // the User's new password, unencrypted
+
+	/**
+	 * @return array
+	 */
+	public static function getAuthenticationMethods()
+	{
+		return array('local','Employee');
+	}
 
 	/**
 	 * @param int|string $id
