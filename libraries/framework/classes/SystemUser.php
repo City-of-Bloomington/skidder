@@ -18,7 +18,6 @@ abstract class SystemUser extends ActiveRecord
 	abstract public function getRoles();
 
 	abstract public function hasRole($roles);
-	abstract public static function getAuthenticationMethods();
 
 	abstract public function setAuthenticationMethod($method);
 	abstract public function setRoles($roles);
