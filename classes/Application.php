@@ -182,10 +182,9 @@ class Application extends ActiveRecord
 	 */
 	public function log($post)
 	{
-		$request_uri = trim($post['request_uri']);
-
-		preg_match('/^(.+)\??/', $request_uri, $matches);
-		$script = $matches[1];
+		$request_uri = trim($post['script']);
+		$t = explode('?',$request_uri);
+		$script = $t[0];
 
 		$type = trim($post['type']);
 		$message = trim($post['message']);

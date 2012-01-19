@@ -18,9 +18,11 @@ foreach ($query as $log) {
 	$script = View::escape($log['script']);
 	$type = View::escape($log['type']);
 	$message = View::escape($log['message']);
+	$request_uri = View::escape($log['request_uri']);
 	echo "
 	<div class=\"interfaceBox\">
 		<h1>$log[timestamp] - $script</h1>
+		<p>$request_uri</p>
 		<p>$type</p>
 		<code>
 <pre>
