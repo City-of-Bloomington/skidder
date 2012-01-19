@@ -182,7 +182,11 @@ class Application extends ActiveRecord
 	 */
 	public function log($post)
 	{
-		$script = trim($post['script']);
+		$request_uri = trim($post['request_uri']);
+
+		preg_match('/^(.+)\??/', $request_uri, $matches);
+		$script = $matches[1];
+
 		$type = trim($post['type']);
 		$message = trim($post['message']);
 		if (!$script || !$type || !$message) {
@@ -195,11 +199,15 @@ class Application extends ActiveRecord
 		// anything we might need to do to support large $messages
 		// If MySQL max_allowed_packet is too small, I'm still not sure
 		// what we can do.
-		$query = $pdo->prepare('insert entries values(?,now(),?,?,?)');
-		$query->bindParam(1,$this->id);
-		$query->bindParam(2,$script);
-		$query->bindParam(3,$type);
-		$query->bindParam(4,$message);
+		$sql = "insert entries
+				(application_id, timestamp, request_uri, script, type, message)
+				values(?, now(), ?, ?, ?, ?)";
+		$query = $pdo->prepare($sql);
+		$query->bindParam(1, $this->id);
+		$query->bindParam(2, $request_uri);
+		$query->bindParam(3, $script);
+		$query->bindParam(4, $type);
+		$query->bindParam(5, $message);
 		$query->execute();
 
 		$query = $pdo->prepare('select max(timestamp) as timestamp from entries where application_id=?');
@@ -209,16 +217,18 @@ class Application extends ActiveRecord
 	}
 
 	/**
-	 * Returns all the scripts and count of the log entries for each script
+	 * Returns a count distinct log entries for the field given
 	 *
-	 * @return array (script=>,count=>)
+	 * @param string $field A field in the entries table
+	 * @return array
 	 */
-	public function getEntryScripts()
+	public function distinct($field)
 	{
+		$field = str_replace('`','``',$field);
 		$pdo = Database::getConnection();
-		$sql = "select distinct script,count(*) as count from entries
+		$sql = "select distinct $field,count(*) as count from entries
 				where application_id=?
-				group by script order by timestamp desc";
+				group by $field order by timestamp desc";
 		$query = $pdo->prepare($sql);
 		$query->execute(array($this->id));
 		$result = $query->fetchAll(PDO::FETCH_ASSOC);
@@ -246,13 +256,16 @@ class Application extends ActiveRecord
 		$parameters[] = $this->id;
 
 		if (is_array($fields)) {
-			if (array_key_exists('script',$fields)) {
-				$options[] = 'script=?';
-				$parameters[] = $fields['script'];
-			}
-			if (array_key_exists('timestamp',$fields)) {
-				$options[] = 'timestamp=from_unixtime(?)';
-				$parameters[] = $fields['timestamp'];
+			foreach ($fields as $field=>$value) {
+				switch ($field) {
+					case 'timestamp':
+						$options[] = 'timestamp=from_unixtime(?)';
+						$parameters[] = $value;
+						break;
+					default:
+						$options[] = "$field=?";
+						$parameters[] = $value;
+				}
 			}
 		}
 		$options = implode(' and ',$options);

@@ -1,41 +1,50 @@
 <?php
 /**
- * @copyright 2009 City of Bloomington, Indiana
+ * @copyright 2009-2012 City of Bloomington, Indiana
  * @license http://www.gnu.org/licenses/agpl.txt GNU/AGPL, see LICENSE.txt
  * @author Cliff Ingham <inghamn@bloomington.in.gov>
  * @param Application $this->application
- * @param GET script
+ * @param GET field
  */
-$scripts = $this->application->getEntryScripts();
-if (count($scripts)) {
-	echo "
-	<table>
-	<tr><th>Script</th>
-		<th>Error Count</th>
-		<th></th>
-	</tr>
-	";
-	foreach ($this->application->getEntryScripts() as $entry) {
-		$url = $this->application->getURL();
-		$url->script = $entry['script'];
+echo "<h2>Display By:</h2><ul>";
+$url = new URL($_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']);
+$list = array('script','type','request_uri');
+foreach ($list as $f) {
+	$url->field = $f;
+	echo "<li><a href=\"$url\">$f</a></li>";
+}
+echo "</ul>";
 
-		$deleteURL = new URL(BASE_URL.'/applications/deleteEntries.php');
-		$deleteURL->application_id = $this->application->getId();
-		$deleteURL->script = $entry['script'];
-		$deleteURL->return_url = $_SERVER['REQUEST_URI'];
-
-		$script = View::escape($entry['script']);
+if (!empty($_GET['field'])) {
+	$field = $_GET['field'];
+	$entries = $this->application->distinct($field);
+	if (count($entries)) {
+		$title = View::escape(ucfirst($field));
 		echo "
-		<tr><td><a href=\"$url\">$script</a></td>
-			<td>$entry[count]</td>
-			<td><a class=\"delete button\" href=\"$deleteURL\">Delete</a></td>
+		<table>
+		<tr><th>$title</th>
+			<th>Error Count</th>
+			<th></th>
 		</tr>
 		";
-		if (isset($_GET['script']) && $entry['script']==$_GET['script']) {
-			echo "<tr><td colspan=\"2\">";
-			include APPLICATION_HOME.'/blocks/html/applications/entryList.inc';
-			echo "</td></tr>";
+		foreach ($entries as $entry) {
+			$url = new URL(BASE_URL.'/applications/entries.php');
+			$url->application_id = $this->application->getId();
+			$url->$field = $entry[$field];
+
+			$deleteURL = new URL(BASE_URL.'/applications/deleteEntries.php');
+			$deleteURL->application_id = $this->application->getId();
+			$deleteURL->$field = $entry[$field];
+			$deleteURL->return_url = $_SERVER['REQUEST_URI'];
+
+			$value = View::escape($entry[$field]);
+			echo "
+			<tr><td><a href=\"$url\">$value</a></td>
+				<td>$entry[count]</td>
+				<td><a class=\"delete button\" href=\"$deleteURL\">Delete</a></td>
+			</tr>
+			";
 		}
+		echo "</table>";
 	}
-	echo "</table>";
 }

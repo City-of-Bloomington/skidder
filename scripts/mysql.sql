@@ -6,7 +6,7 @@ create table people (
 	firstname varchar(128) not null,
 	lastname varchar(128) not null,
 	email varchar(255) not null
-) engine=InnoDB;
+);
 insert people values(1,'Administrator','','');
 
 create table users (
@@ -16,13 +16,13 @@ create table users (
 	password varchar(32),
 	authenticationMethod varchar(40) not null default 'LDAP',
 	foreign key (person_id) references people(id)
-) engine=InnoDB;
+);
 insert users values(1,1,'admin',md5('admin'),'local');
 
 create table roles (
 	id int unsigned not null primary key auto_increment,
 	name varchar(30) not null unique
-) engine=InnoDB;
+);
 insert roles values(1,'Administrator');
 
 create table user_roles (
@@ -31,7 +31,7 @@ create table user_roles (
 	primary key (user_id,role_id),
 	foreign key(user_id) references users (id),
 	foreign key(role_id) references roles (id)
-) engine=InnoDB;
+);
 insert user_roles values(1,1);
 
 create table applications (
@@ -39,18 +39,17 @@ create table applications (
 	name varchar(128) not null,
 	ip_address varchar(15) not null,
 	unique (name,ip_address)
-) engine=InnoDB;
+);
 
 create table entries (
 	application_id int unsigned not null,
 	timestamp timestamp not null default CURRENT_TIMESTAMP,
+	request_uri varchar(255) not null,
 	script varchar(255) not null,
 	type varchar(128) not null,
 	message mediumtext,
-	foreign key (application_id) references applications(id),
-	key (script),
-	key (type)
-) engine=InnoDB;
+	foreign key (application_id) references applications(id)
+);
 
 create table subscriptions (
 	id int unsigned not null primary key auto_increment,
@@ -60,13 +59,12 @@ create table subscriptions (
 	unique (application_id,person_id),
 	foreign key (application_id) references applications(id),
 	foreign key (person_id) references people(id)
-) engine=InnoDB;
+);
 
 create table notifications (
 	subscription_id int unsigned not null,
 	script varchar(255) not null,
 	timestamp timestamp not null default CURRENT_TIMESTAMP,
 	primary key (subscription_id,script),
-	foreign key (subscription_id) references subscriptions(id),
-	foreign key (script) references entries(script)
-) engine=InnoDB;
+	foreign key (subscription_id) references subscriptions(id)
+);

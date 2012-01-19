@@ -21,7 +21,7 @@
 		<th>Type</th>
 	</tr>
 	<?php
-		$query = $this->application->getEntries(array('script'=>$entry['script']));
+		$query = $this->application->getEntries($_GET);
 		foreach ($query as $row) {
 			$url = new URL(BASE_URL.'/applications/viewEntry.php');
 			$url->application_id = $row['application_id'];

@@ -22,6 +22,8 @@ if (isset($_SESSION['USER'])) {
 	}
 }
 echo "
-<h1>$name $subscriptionButton</h1>
-<h2>{$this->application->getIp_address()}</h2>
+<h1><a href=\"{$this->application->getURL()}\">$name</a>
+	({$this->application->getIp_address()})
+	$subscriptionButton
+</h1>
 ";
