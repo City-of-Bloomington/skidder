@@ -209,6 +209,12 @@ class Application extends ActiveRecord
 		$query->bindParam(5, $message);
 		$query->execute();
 
+		foreach ($this->getSubscriptions() as $subscriber) {
+			if ($subscriber->wantsNotification($script)) {
+				$subscriber->notify($script,$message);
+			}
+		}
+
 		$query = $pdo->prepare('select max(timestamp) as timestamp from entries where application_id=?');
 		$query->execute(array($this->id));
 		$result = $query->fetchAll(PDO::FETCH_ASSOC);

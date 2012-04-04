@@ -18,12 +18,6 @@ if (isset($_POST['application_id'])) {
 			$template->blocks[] = new Block('applications/entryFullDisplay.inc',
 											array('entries'=>array($_POST)));
 			$message = $template->render();
-
-			foreach ($application->getSubscriptions() as $subscriber) {
-				if ($subscriber->wantsNotification($_POST['script'])) {
-					$subscriber->notify($_POST['script'],$message);
-				}
-			}
 		}
 		else {
 			throw new Exception('notAllowed');
