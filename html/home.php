@@ -10,14 +10,6 @@ if (isset($_POST['application_id'])) {
 		if ($application->getIp_address() == $_SERVER['REMOTE_ADDR']) {
 			$timestamp = $application->log($_POST);
 			header('HTTP/1.1 201 Created');
-
-			$_POST['timestamp'] = $timestamp;
-			$template = new Template('default','txt');
-			$template->blocks[] = new Block('applications/applicationInfo.inc',
-											array('application'=>$application));
-			$template->blocks[] = new Block('applications/entryFullDisplay.inc',
-											array('entries'=>array($_POST)));
-			$message = $template->render();
 		}
 		else {
 			throw new Exception('notAllowed');

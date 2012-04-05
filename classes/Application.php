@@ -164,7 +164,7 @@ class Application extends ActiveRecord
 	// We recommend adding all your custom code down here at the bottom
 	//----------------------------------------------------------------
 	/**
-	 * @return string
+	 * @return URL
 	 */
 	public function getURL()
 	{
@@ -209,16 +209,23 @@ class Application extends ActiveRecord
 		$query->bindParam(5, $message);
 		$query->execute();
 
+		$query = $pdo->prepare('select unix_timestamp(max(timestamp)) as timestamp from entries where application_id=?');
+		$query->execute(array($this->id));
+		$result = $query->fetchAll(PDO::FETCH_ASSOC);
+		$post['timestamp'] = $result[0]['timestamp'];
+
+		// Notify all the subscribers of this new error
+		$template = new Template('default','txt');
+		$template->blocks[] = new Block('applications/applicationInfo.inc', array('application'=>$this));
+		$template->blocks[] = new Block('applications/entryFullDisplay.inc',array('application'=>$this,'entries'=>array($post)));
+		$message = $template->render();
 		foreach ($this->getSubscriptions() as $subscriber) {
 			if ($subscriber->wantsNotification($script)) {
 				$subscriber->notify($script,$message);
 			}
 		}
 
-		$query = $pdo->prepare('select max(timestamp) as timestamp from entries where application_id=?');
-		$query->execute(array($this->id));
-		$result = $query->fetchAll(PDO::FETCH_ASSOC);
-		return $result[0]['timestamp'];
+		return $post['timestamp'];
 	}
 
 	/**
