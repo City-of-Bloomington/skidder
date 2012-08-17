@@ -1,14 +1,5 @@
 <?php
 /**
- * Replace this copyright statement with your own.  All the generated code
- * will include this copyright statement
- */
-define('COPYRIGHT',"/**
- * @copyright 2009 City of Bloomington, Indiana
- * @license http://www.gnu.org/licenses/agpl.txt GNU/AGPL, see LICENSE.txt
- * @author Cliff Ingham <inghamn@bloomington.in.gov>
- */");
-/**
  * Used to keep sessions on the same webserver seperate;
  */
 define('APPLICATION_NAME','application_name');
@@ -101,6 +92,7 @@ define('DIRECTORY_ADMIN_PASS','password');
  * Import global functions that we use for many applications we write
  */
 include FRAMEWORK.'/globalFunctions.php';
+spl_autoload_register('autoload');
 
 /**
  * Session Startup
