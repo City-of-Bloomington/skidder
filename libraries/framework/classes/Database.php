@@ -8,7 +8,7 @@
  */
 class Database
 {
-	private static $pdo;
+	private static $connection;
 
 	/**
 	 * @param boolean $reconnect If true, drops the connection and reconnects
@@ -17,19 +17,43 @@ class Database
 	public static function getConnection($reconnect=false)
 	{
 		if ($reconnect) {
-			self::$pdo=null;
+			self::$connection=null;
 		}
-		if (!self::$pdo) {
+		if (!self::$connection) {
 			try {
-				self::$pdo = new PDO(DB_TYPE.':'.DB_DSN.'dbname='.DB_NAME,
-										DB_USER,
-										DB_PASS,
-										array(PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION));
+				$parameters = array('host'    =>DB_HOST,
+									'username'=>DB_USER,
+									'password'=>DB_PASS,
+									'dbname'  =>DB_NAME,
+									'options' =>array(Zend_Db::AUTO_QUOTE_IDENTIFIERS=>false));
+				self::$connection = Zend_Db::factory(DB_ADAPTER,$parameters);
+				self::$connection->getConnection();
 			}
-			catch (PDOException $e) {
+			catch (Exception $e) {
 				die($e->getMessage());
 			}
 		}
-		return self::$pdo;
+		return self::$connection;
+	}
+
+	/**
+	 * Returns the type of database that's being used (mysql, oracle, etc.)
+	 *
+	 * @return string
+	 */
+	public static function getType()
+	{
+		switch (strtolower(DB_ADAPTER)) {
+			case 'pdo_mysql':
+			case 'mysqli':
+				return 'mysql';
+				break;
+
+			case 'pdo_oci':
+			case 'oci8':
+				return 'oracle';
+				break;
+		}
+
 	}
 }

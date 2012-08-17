@@ -5,69 +5,54 @@
  * @author Cliff Ingham <inghamn@bloomington.in.gov>
  * @param User $this->user
  */
+$title = $this->user->getId() ? "Edit {$this->user->getUsername()}" : "Create User Account";
 ?>
-<h1>Edit <?php echo $this->user->getUsername(); ?></h1>
-<form method="post" action="<?php echo $_SERVER['SCRIPT_NAME']; ?>">
-	<fieldset><legend>Login Info</legend>
-		<input name="user_id" type="hidden" value="<?php echo $this->user->getId(); ?>" />
-		<table>
-			<tr><td><label for="user-authenticationMethod">Authentication</label></td>
-				<td><select name="user[authenticationMethod]" id="user-authenticationMethod">
-					<?php
-						foreach (User::getAuthenticationMethods() as $method) {
-							$selected = $this->user->getAuthenticationMethod()==$method
-								? 'selected="selected"'
-								: '';
-							echo "<option $selected>$method</option>";
-						}
-					?>
-					</select>
-				</td>
-			</tr>
-			<tr><td><label for="user-username">Username</label></td>
-				<td><input name="user[username]" id="user-username" value="<?php echo View::escape($this->user->getUsername()); ?>" />
-				</td>
-			</tr>
-			<tr><td><label for="user-password">Password</label></td>
-				<td><input name="user[password]" id="user-password" /></td>
-			</tr>
-			<tr><td><label for="user-roles">Roles</label></td>
-				<td><select name="user[roles][]" id="user-roles" size="5" multiple="multiple">
-					<?php
-						$roles = new RoleList();
-						$roles->find();
-						foreach ($roles as $role) {
-							$selected = in_array($role,$this->user->getRoles())
-										? 'selected="selected"'
-										: '';
-							echo "<option $selected>$role</option>";
-						}
-					?>
-					</select>
-				</td>
-			</tr>
-		</table>
-	</fieldset>
-
-	<fieldset><legend>Personal Info</legend>
-		<table>
-			<tr><td><label for="person-firstname">Firstname</label></td>
-				<td><input name="person[firstname]" id="person-firstname" value="<?php echo View::escape($this->user->getFirstname()); ?>" />
-				</td>
-			</tr>
-			<tr><td><label for="person-lastname">Lastname</label></td>
-				<td><input name="person[lastname]" id="person-lastname" value="<?php echo View::escape($this->user->getLastname()); ?>" />
-				</td>
-			</tr>
-			<tr><td><label for="person-email">Email</label></td>
-				<td><input name="person[email]" id="person-email" value="<?php echo View::escape($this->user->getEmail()); ?>" />
-				</td>
-			</tr>
-		</table>
-
-		<button type="submit" class="submit">Submit</button>
-		<button type="button" class="cancel" onclick="document.location.href='<?php echo BASE_URL; ?>/users';">
-			Cancel
-		</button>
-	</fieldset>
-</form>
+<div class="updateUserForm">
+	<h2><?php echo $title; ?></h2>
+	<form method="post" action="<?php echo BASE_URL; ?>/users/update">
+		<fieldset><legend>User Account</legend>
+			<input name="user_id" type="hidden" value="<?php echo $this->user->getId(); ?>" />
+			<table>
+				<tr><td><label for="authenticationMethod">Authentication</label></td>
+					<td><select name="authenticationMethod" id="authenticationMethod">
+						<?php
+							foreach (Person::getAuthenticationMethods() as $method) {
+								$selected = $this->user->getAuthenticationMethod()==$method
+									? 'selected="selected"'
+									: '';
+								echo "<option $selected>$method</option>";
+							}
+						?>
+						</select>
+					</td>
+				</tr>
+				<tr><td><label for="username">Username</label></td>
+					<td><input name="username" id="username" value="<?php echo View::escape($this->user->getUsername()); ?>" />
+					</td>
+				</tr>
+				<tr><td><label for="password">Password</label></td>
+					<td><input name="password" id="password" /></td>
+				</tr>
+				<tr><td><label for="role">Role</label></td>
+					<td><select name="role" id="role"><option></option>
+						<?php
+							global $ZEND_ACL;
+							foreach (array_reverse($ZEND_ACL->getRoles()) as $role) {
+								$selected = $this->user->getRole()==$role
+									? 'selected="selected"'
+									: '';
+								echo "<option $selected>$role</option>";
+							}
+						?>
+						</select>
+					</td>
+				</tr>
+			</table>
+			<button type="submit" class="submit">Submit</button>
+			<button type="button" class="cancel"
+				onclick="document.location.href='<?php echo BASE_URL; ?>/users';">
+				Cancel
+			</button>
+		</fieldset>
+	</form>
+</div>

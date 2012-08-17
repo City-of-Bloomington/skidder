@@ -4,15 +4,19 @@
  *
  * The template collects all the blocks from the controller
  *
- * @copyright 2006-2009 City of Bloomington, Indiana
+ * @copyright 2006-2012 City of Bloomington, Indiana
  * @license http://www.gnu.org/licenses/agpl.txt GNU/AGPL, see LICENSE.txt
  * @author Cliff Ingham <inghamn@bloomington.in.gov>
  */
 class Template extends View
 {
+	private $path;
 	private $filename;
+
 	public $outputFormat = 'html';
-	public $blocks = array();
+	public $blocks   = array();
+	private $assets  = array();
+	private $helpers = array();
 
 	/**
 	 * @param string $filename
@@ -21,11 +25,12 @@ class Template extends View
 	 */
 	public function __construct($filename='default',$outputFormat='html',array $vars=null)
 	{
+		$this->path = APPLICATION_HOME.'/templates';
 		$this->filename = $filename;
 		$this->outputFormat = preg_replace('/[^a-zA-Z]/','',$outputFormat);
 
 		// Make sure the output format exists
-		if (!is_file(APPLICATION_HOME."/templates/{$this->outputFormat}/{$this->filename}.inc")) {
+		if (!is_file("{$this->path}/{$this->outputFormat}/{$this->filename}.inc")) {
 			$this->filename = 'default';
 			$this->outputFormat = 'html';
 		}
@@ -34,6 +39,33 @@ class Template extends View
 			foreach ($vars as $name=>$value) {
 				$this->vars[$name] = $value;
 			}
+		}
+	}
+
+	/**
+	 * @param string $filename
+	 */
+	public function setFilename($filename)
+	{
+		if (is_file("{$this->path}/{$this->outputFormat}/$filename.inc")) {
+			$this->filename = $filename;
+		}
+		else {
+			throw new Exception('unknownTemplate');
+		}
+	}
+
+	/**
+	 * @param string $format
+	 */
+	public function setOutputFormat($format)
+	{
+		$format = preg_replace('/[^a-zA-Z]/','',$format);
+		if (is_file("{$this->path}/$format/{$this->filename}.inc")) {
+			$this->outputFormat = $format;
+		}
+		else {
+			throw new Exception('unknownOutputFormat');
 		}
 	}
 
@@ -48,7 +80,7 @@ class Template extends View
 	public function render()
 	{
 		ob_start();
-		include APPLICATION_HOME."/templates/{$this->outputFormat}/{$this->filename}.inc";
+		include "{$this->path}/{$this->outputFormat}/{$this->filename}.inc";
 		return ob_get_clean();
 	}
 
@@ -80,26 +112,75 @@ class Template extends View
 	 * @param string $panel
 	 * @return string
 	 */
-	private function includeBlocks($panel=null)
+	private function includeBlocks($target=null)
 	{
 		ob_start();
-		if ($panel) {
+		if ($target) {
 			// Render any blocks for the given panel
-			if (isset($this->blocks[$panel]) && is_array($this->blocks[$panel])) {
-				foreach ($this->blocks[$panel] as $block) {
-					echo $block->render($this->outputFormat);
+			if (isset($this->blocks[$target]) && is_array($this->blocks[$target])) {
+				foreach ($this->blocks[$target] as $block) {
+					echo $block->render($this->outputFormat,$this);
 				}
 			}
-
+			else {
+				// Go through the template looking for what they asked for
+				foreach ($this->blocks as $key=>$value) {
+					// If we find a block that matches, render that block
+					if ($value instanceof Block) {
+						if ($value->getFile() == $target) {
+							echo $value->render($this->outputFormat,$this);								continue;
+						}
+					}
+					// The block they asked for might be inside a panel
+					else {
+						foreach ($value as $block) {
+							if ($block->getFile() == $target
+								|| $block->title == $target) {
+								echo $block->render($this->outputFormat,$this);
+								continue;
+							}
+						}
+					}
+				}
+			}
 		}
 		else {
 			// Render only the blocks for the main content area
 			foreach ($this->blocks as $block) {
 				if (!is_array($block)) {
-					echo $block->render($this->outputFormat);
+					echo $block->render($this->outputFormat,$this);
 				}
 			}
 		}
 		return ob_get_clean();
+	}
+
+	/**
+	 * Adds data to an asset, making sure to not duplicate existing data
+	 *
+	 * @param string $name The name of the asset
+	 * @param mixed $data
+	 */
+	public function addToAsset($name,$data)
+	{
+		if (!isset($this->assets[$name]) || !is_array($this->assets[$name])) {
+			$this->assets[$name] = array();
+		}
+		if (!in_array($data,$this->assets[$name])) {
+			$this->assets[$name][] = $data;
+		}
+	}
+
+	/**
+	 * Loads and returns a helper object
+	 */
+	public function getHelper($functionName)
+	{
+		if (!array_key_exists($functionName, $this->helpers)) {
+			$class = ucfirst($functionName);
+			require_once APPLICATION_HOME."/templates/{$this->outputFormat}/helpers/$class.php";
+			$this->helpers[$functionName] = new $class();
+		}
+		return $this->helpers[$functionName];
 	}
 }

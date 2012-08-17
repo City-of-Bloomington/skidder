@@ -1,7 +1,8 @@
 <?php
 /**
  * Global, shared functions for all PHP web applications
- * @copyright 2006-2009 City of Bloomington, Indiana.
+ *
+ * @copyright 2006-2012 City of Bloomington, Indiana.
  * @license http://www.gnu.org/licenses/agpl.txt GNU/AGPL, see LICENSE.txt
  * @author Cliff Ingham <inghamn@bloomington.in.gov>
  * @package GlobalFunctions
@@ -10,16 +11,19 @@
  * Load classes on the fly as needed
  * @param string $class
  */
-function __autoload($class)
+function autoload($class)
 {
-	if (file_exists(APPLICATION_HOME."/classes/$class.php")) {
-		require_once(APPLICATION_HOME."/classes/$class.php");
+	if (false !== strpos($class, 'Controller')
+		&& file_exists(APPLICATION_HOME."/controllers/$class.php")) {
+		include APPLICATION_HOME."/controllers/$class.php";
+	}
+	elseif (file_exists(APPLICATION_HOME."/models/$class.php")) {
+		include APPLICATION_HOME."/models/$class.php";
 	}
 	elseif (file_exists(FRAMEWORK."/classes/$class.php")) {
-		require_once(FRAMEWORK."/classes/$class.php");
+		include FRAMEWORK."/classes/$class.php";
 	}
 }
-
 
 /**
  * Provide nicely formatted error messages when PHP bombs out.
@@ -62,7 +66,8 @@ function customErrorHandler ($errno, $errstr, $errfile, $errline)
 				 "From: apache@$_SERVER[SERVER_NAME]");
 		}
 		if (in_array('SKIDDER',$ERROR_REPORTING)) {
-			$message = "Error on line $errline of file $errfile:\n$errstr\n";
+			$script = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : $_SERVER['SCRIPT_NAME'];
+			$message = "$script\nError on line $errline of file $errfile:\n$errstr\n";
 			$message.= print_r(debug_backtrace(),true);
 
 			$skidder = curl_init(SKIDDER_URL);
@@ -72,7 +77,7 @@ function customErrorHandler ($errno, $errstr, $errfile, $errline)
 			curl_setopt($skidder,
 						CURLOPT_POSTFIELDS,
 						array('application_id'=>SKIDDER_APPLICATION_ID,
-							  'script'=>$_SERVER['REQUEST_URI'],
+							  'script'=>$script,
 							  'type'=>$errstr,
 							  'message'=>$message));
 			curl_exec($skidder);
@@ -146,83 +151,21 @@ if (ERROR_REPORTING != 'PHP_DEFAULT') {
 	set_exception_handler('customExceptionHandler');
 }
 
-
 /**
- * Makes sure the user is logged in.
+ * Checks if the user is logged in and is supposed to have acces to the resource
  *
- * If a Role or an array of Roles is passed in, it will check
- * to make sure the user belongs to one of the given roles.
- * If the validation fails, the user will be bounced to the BASE_URL
+ * The main work of this function is done in SystemUser::isAllowed()
+ * This is implemented by checking against a Zend_Acl object
+ * The Zend_Acl should be created in configuration.inc
  *
- * @param string $role Optional role name
- * @param array $roles Optional array of role names
- */
-function verifyUser($roles=null)
-{
-	// Make sure they're logged in
-	if (!isset($_SESSION['USER']) || $_SESSION['IP_ADDRESS']!=$_SERVER['REMOTE_ADDR']) {
-		// They're not logged in.  Boot them out to the login page
-		$_SESSION['errorMessages'][] = new Exception('notLoggedIn');
-		header("Location: ".BASE_URL);
-		exit();
-	}
-
-	// Check their roles against the required roles for the page
-	if ($roles) {
-		if (!$_SESSION['USER']->hasRole($roles)) {
-			$_SESSION['errorMessages'][] = new Exception('noAccessAllowed');
-			header('Location: '.BASE_URL);
-			exit();
-		}
-	}
-}
-
-/**
- * Makes sure the user belongs to at least one of a set of roles
- * You can pass in either a single role name to check,
- * or an array of role names to check against.
- * @param string $role
- * @param array $roles
+ * @param string $resource
+ * @param string $action
  * @return boolean
  */
-function userHasRole($roles)
+function userIsAllowed($resource, $action=null)
 {
+	global $ZEND_ACL;
 	if (isset($_SESSION['USER'])) {
-		return $_SESSION['USER']->hasRole($roles);
+		return $_SESSION['USER']->isAllowed($resource, $action);
 	}
-	return false;
-}
-
-/**
- * Browsers still use & when creating the url's when posting a form.
- * This will convert those into XHTML-compliant semicolons for using inside the markup
- *
- * @return string
- */
-function getCurrentURL()
-{
-	return strtr($_SERVER['REQUEST_URI'],"&",";");
-}
-
-
-function isValidDate($date) {
-	if (!preg_match("/\d{4}\-\d{1,2}\-\d{{1,2}/",$date)) {
-		return false;
-	}
-
-	$date = explode("-",$date);
-	if (count($date) != 3) {
-		return false;
-	}
-	if (strlen($date[0]) != 4) {
-		return false;
-	}
-	if (1>=$date[1] || $date[1]>=12) {
-		return false;
-	}
-	if (1>=$date[2] || $date[2]>=31) {
-		return false;
-	}
-
-	return true;
 }
