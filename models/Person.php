@@ -264,7 +264,7 @@ class Person extends ActiveRecord
 	public function hasSubscription(Application $application)
 	{
 		$list = new SubscriptionList(array('application_id'=>$application->getId(),
-										   'person_id'=>$this->id));
+										   'person_id'=>$this->getId()));
 		return count($list) ? true : false;
 	}
 
@@ -274,7 +274,7 @@ class Person extends ActiveRecord
 	public function getSubscription(Application $application)
 	{
 		$list = new SubscriptionList(array('application_id'=>$application->getId(),
-										   'person_id'=>$this->id));
+										   'person_id'=>$this->getId()));
 		if (count($list)) { return $list[0]; }
 	}
 }
