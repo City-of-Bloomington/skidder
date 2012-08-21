@@ -6,7 +6,7 @@ the full details of the logs here.</p>
 <h2>How to POST logs</h2>
 <p>Once you've added an application here, that application will be allowed to POST log entries
 here.  Log entries should be posted to:</p>
-<h3><?php echo BASE_URL; ?>/home.php</h3>
+<h3><?php echo BASE_URL; ?></h3>
 <p>Log entry POSTs must contain these fields:</p>
 <table>
 	<tr><th>application_id</th>
