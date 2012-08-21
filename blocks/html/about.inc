@@ -1,6 +1,6 @@
-<h1>Skidder brings logs to you</h1>
+<h2>Skidder brings logs to you</h2>
 <p>Skidder listens for log postings from various applications.  When there's something
-happening on an application you've subsribed to, skidder will notify you.  You can browse
+happening on an application you've subscribed to, skidder will notify you.  You can browse
 the full details of the logs here.</p>
 
 <h2>How to POST logs</h2>

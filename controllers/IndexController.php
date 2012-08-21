@@ -37,9 +37,7 @@ class IndexController extends Controller
 			}
 		}
 		else {
-			$template = new Template();
-			$template->blocks[] = new Block('about.inc');
-			echo $template->render();
+			$this->template->blocks[] = new Block('about.inc');
 		}
 	}
 }
