@@ -259,22 +259,22 @@ class Person extends ActiveRecord
 	}
 
 	/**
-	 * @return boolean
-	 */
-	public function hasSubscription(Application $application)
-	{
-		$list = new SubscriptionList(array('application_id'=>$application->getId(),
-										   'person_id'=>$this->getId()));
-		return count($list) ? true : false;
-	}
-
-	/**
 	 * @return Subscription
 	 */
 	public function getSubscription(Application $application)
 	{
-		$list = new SubscriptionList(array('application_id'=>$application->getId(),
-										   'person_id'=>$this->getId()));
-		if (count($list)) { return $list[0]; }
+		$zend_db = Database::getConnection();
+		$row = $zend_db->fetchRow('select * from subscriptions where application_id=?', array($application->getId()));
+		if ($row) {
+			return new Subscription($row);
+		}
+	}
+
+	/**
+	 * @return SubscriptionList
+	 */
+	public function getSubscriptions()
+	{
+		return new SubscriptionList(array('person_id'=>$this->getId()));
 	}
 }

@@ -15,3 +15,5 @@ where p.id=u.person_id
 drop table user_roles;
 drop table roles;
 drop table users;
+
+alter table applications change ip_address ipAddress varchar(15) not null;

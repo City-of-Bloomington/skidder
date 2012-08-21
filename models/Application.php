@@ -101,11 +101,12 @@ class Application extends ActiveRecord
 
 	/**
 	 * Adds a new log entry to the database
+	 *
 	 * @param array $post An associative array containg all the information needed
 	 * 		$post['script']
 	 * 		$post['type']
 	 * 		$post['message']
-	 * 	@return string The MySQL-formatted timestamp for this log entry
+	 * 	@return string The unix timestamp for this log entry
 	 */
 	public function log($post)
 	{

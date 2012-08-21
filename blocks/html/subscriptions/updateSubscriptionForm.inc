@@ -4,26 +4,36 @@
  * @license http://www.gnu.org/licenses/agpl.txt GNU/AGPL, see LICENSE.txt
  * @author Cliff Ingham <inghamn@bloomington.in.gov>
  * @param Subscription $this->subscription
+ * @param string $this->return_url
  */
+$fields = array('id', 'application_id', 'waitTime');
+foreach ($fields as $f) {
+	$get = 'get'.ucfirst($f);
+	$$f = $this->subscription->$get();
+}
+
 $name = View::escape($this->subscription->getApplication()->getName());
+$title = $id ? 'Edit subscription to' : 'Subscribe to';
 ?>
-<h1>Update Subscription to <?php echo $name; ?></h1>
-<form method="post" action="<?php echo $_SERVER['SCRIPT_NAME']; ?>">
+<h2><?php echo "$title $name"; ?></h2>
+<form method="post" action="<?php echo BASE_URI; ?>/subscriptions/update">
 	<fieldset><legend>Subscription Info</legend>
-		<input name="subscription_id" type="hidden" value="<?php echo $this->subscription->getId(); ?>" />
+		<input name="subscription_id" type="hidden" value="<?php echo $id ?>" />
+		<input name="application_id" type="hidden" value="<?php echo $application_id; ?>" />
+		<input name="return_url" type="hidden" value="<?php echo View::escape($this->return_url); ?>" />
 
 		<p>Enter the how long to wait before repeating error reports about the same script.</p>
 		<table>
 
-			<tr><td><label for="subscription-waitTime">Wait Time (in seconds)</label></td>
-				<td><input name="subscription[waitTime]" id="subscription-waitTime" size="4" value="<?php echo $this->subscription->getWaitTime(); ?>" />
+			<tr><td><label for="waitTime">Wait Time (in seconds)</label></td>
+				<td><input name="waitTime" id="waitTime" size="4" value="<?php echo $waitTime; ?>" />
 				</td>
 			</tr>
 
 		</table>
 
 		<button type="submit" class="submit">Submit</button>
-		<button type="button" class="cancel" onclick="document.location.href='<?php echo BASE_URL; ?>/subscriptions';">
+		<button type="button" class="cancel" onclick="document.location.href='<?php echo $this->return_url; ?>';">
 			Cancel
 		</button>
 	</fieldset>

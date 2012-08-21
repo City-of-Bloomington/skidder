@@ -8,9 +8,11 @@
 $name = View::escape($this->application->getName());
 $subscriptionButton = '';
 if (isset($_SESSION['USER'])) {
-	if ($_SESSION['USER']->hasSubscription($this->application)) {
+	$subscription = $_SESSION['USER']->getSubscription($this->application);
+
+	if ($subscription) {
 		$url = new URL(BASE_URL.'/subscriptions/delete');
-		$url->subscription_id = $_SESSION['USER']->getSubscription($this->application)->getId();
+		$url->subscription_id = $subscription->getId();
 		$url->return_url = $_SERVER['REQUEST_URI'];
 		$subscriptionButton = "<a class=\"unsubscribe button\" href=\"$url\">Unsubscribe</a>";
 	}

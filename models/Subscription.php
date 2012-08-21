@@ -8,8 +8,8 @@ class Subscription extends ActiveRecord
 {
 	protected $tablename = 'subscriptions';
 
-	private $application;
-	private $person;
+	protected $application;
+	protected $person;
 
 	/**
 	 * Populates the object with data
@@ -113,15 +113,12 @@ class Subscription extends ActiveRecord
 	 */
 	public function wantsNotification($script)
 	{
-		$pdo = Database::getConnection();
-		$sql = "select unix_timestamp(timestamp) as timestamp
+		$zend_db = Database::getConnection();
+		$sql = "select max(unix_timestamp(timestamp)) as timestamp
 				from notifications where subscription_id=? and script=?";
-		$query = $pdo->prepare($sql);
-		$query->execute(array($this->id,$script));
-		$result = $query->fetchAll(PDO::FETCH_ASSOC);
-		if (count($result)) {
-			$lastNotified = $result[0]['timestamp'];
-			if ($lastNotified + $this->waitTime <= time()) {
+		$result = $zend_db->fetchOne($sql, array($this->getId(), $script));
+		if ($result) {
+			if ($result + $this->getWaitTime('U') <= time()) {
 				return true;
 			}
 			return false;
@@ -131,10 +128,11 @@ class Subscription extends ActiveRecord
 
 	/**
 	 * Sends out a notification to the person
+	 *
 	 * @param string $script
 	 * @param string $message
 	 */
-	public function notify($script,$message)
+	public function notify($script, $message)
 	{
 		$subject = "{$this->getApplication()->getName()} error";
 		mail($this->getPerson()->getEmail(),
@@ -148,10 +146,18 @@ class Subscription extends ActiveRecord
 	}
 
 	/**
+	 * Subscriptions should only be editable by the person or an admin
+	 *
+	 * Administrators should be able to edit anyone's subscription
+	 * Any user should be able to create new subscriptions
+	 * Users should only be able to edit their own subscriptions
+	 *
 	 * @return boolean
 	 */
-	public function permitsEditingBy(User $user)
+	public function permitsEditingBy(Person $user)
 	{
-		return $user->getRole() == 'Administrator' || $this->getPerson_id()==$user->getPerson_id();
+		return $user->getRole() == 'Administrator'
+				|| !$this->getPerson_id()
+				|| $this->getPerson_id()==$user->getPerson_id();
 	}
 }

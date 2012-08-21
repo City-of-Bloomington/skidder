@@ -76,7 +76,7 @@ class LoginController extends Controller
 	public function logout()
 	{
 		session_destroy();
-		header('Location: '.$this->return_url);
+		header('Location: '.BASE_URL);
 		exit();
 	}
 }
