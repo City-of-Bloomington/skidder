@@ -18,14 +18,7 @@ class ApplicationsController extends Controller
 
 	public function view()
 	{
-		try {
-			$a = new Application($_GET['application_id']);
-		}
-		catch (Exception $e) {
-			$_SESSION['errorMessages'][] = $e;
-			header('Location: '.BASE_URL.'/applications');
-			exit();
-		}
+		$a = $this->loadApplication();
 
 		$this->template->blocks[] = new Block('applications/applicationInfo.inc',array('application'=>$a));
 		$this->template->blocks[] = new Block('applications/logSummary.inc',     array('application'=>$a));
@@ -54,7 +47,8 @@ class ApplicationsController extends Controller
 
 	public function entries()
 	{
-		$application = new Application($_GET['application_id']);
+		$application = $this->loadApplication();
+
 		$this->template->blocks[] = new Block(
 			'applications/applicationInfo.inc', array('application'=>$application)
 		);
@@ -65,7 +59,12 @@ class ApplicationsController extends Controller
 
 	public function viewEntry()
 	{
-		$application = new Application($_GET['application_id']);
+		$application = $this->loadApplication();
+
+		if (empty($_GET['timestamp'])) {
+			header('Location: '.BASE_URL.'/applications/entries?application_id='.$application->getId());
+			exit();
+		}
 		$this->template->blocks[] = new Block(
 			'applications/applicationInfo.inc', array('application'=>$application)
 		);
@@ -77,12 +76,28 @@ class ApplicationsController extends Controller
 
 	public function deleteEntries()
 	{
-		$application = new Application($_GET['application_id']);
+		$application = $this->loadApplication();
+
 		$script = isset($_GET['script']) ? $_GET['script'] : null;
 		$timestamp = isset($_GET['timestamp']) ? $_GET['timestamp'] : null;
 
 		$application->deleteEntries($script,$timestamp);
 
 		header("Location: $_GET[return_url]");
+	}
+
+	private function loadApplication()
+	{
+		try {
+			if (empty($_REQUEST['application_id'])) {
+				throw new Exception('applications/unknownApplication');
+			}
+			return new Application($_REQUEST['application_id']);
+		}
+		catch (Exception $e) {
+			$_SESSION['errorMessages'][] = $e;
+			header('Location: '.BASE_URL.'/applications');
+			exit();
+		}
 	}
 }

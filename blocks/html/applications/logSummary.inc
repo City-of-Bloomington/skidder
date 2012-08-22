@@ -21,10 +21,13 @@ if (!empty($_GET['field'])) {
 		$title = View::escape(ucfirst($field));
 		echo "
 		<table>
-		<tr><th>$title</th>
-			<th>Error Count</th>
-			<th></th>
-		</tr>
+			<thead>
+				<tr><th>$title</th>
+					<th>Error Count</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
 		";
 		foreach ($entries as $entry) {
 			$url = new URL(BASE_URL.'/applications/entries');
@@ -44,6 +47,9 @@ if (!empty($_GET['field'])) {
 			</tr>
 			";
 		}
-		echo "</table>";
+		echo "
+			</tbody>
+		</table>
+		";
 	}
 }
