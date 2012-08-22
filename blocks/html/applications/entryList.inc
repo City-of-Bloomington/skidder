@@ -15,19 +15,22 @@
  */
 ?>
 <table>
-	<tr><th></th>
-		<th>Time</th>
-		<th>Script</th>
-		<th>Type</th>
-	</tr>
+	<thead>
+		<tr><th></th>
+			<th>Time</th>
+			<th>Script</th>
+			<th>Type</th>
+		</tr>
+	</thead>
+	<tbody>
 	<?php
 		$query = $this->application->getEntries($_GET);
 		foreach ($query as $row) {
-			$url = new URL(BASE_URL.'/applications/viewEntry.php');
+			$url = new URL(BASE_URL.'/applications/viewEntry');
 			$url->application_id = $row['application_id'];
 			$url->timestamp = strtotime($row['timestamp']);
 
-			$deleteURL = new URL(BASE_URL.'/applications/deleteEntries.php');
+			$deleteURL = new URL(BASE_URL.'/applications/deleteEntries');
 			$deleteURL->application_id = $this->application->getId();
 			$deleteURL->script = $this->script;
 			$deleteURL->timestamp = strtotime($row['timestamp']);
@@ -45,4 +48,5 @@
 		}
 		$query->closeCursor();
 	?>
+	</tbody>
 </table>

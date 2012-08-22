@@ -1,84 +1,194 @@
 <?php
 /**
- * Helper functions to convert between database types and PHP types
- *
- * These functions handle converting back and forth between MySQL's date
- * format and PHP's getdate() array
- *
- * @copyright 2006-2009 City of Bloomington, Indiana
+ * @copyright 2012 City of Bloomington, Indiana
  * @license http://www.gnu.org/licenses/agpl.txt GNU/AGPL, see LICENSE.txt
  * @author Cliff Ingham <inghamn@bloomington.in.gov>
  */
 abstract class ActiveRecord
 {
-	abstract public function save();
+	protected $tablename;
+	protected $data = array();
+
+	const MYSQL_DATE_FORMAT = 'Y-m-d H:i:s';
+
+	abstract public function validate();
 
 	/**
-	 * Converts from a PHP getdate array into a MySQL datetime string
+	 * Writes the database back to the database
+	 */
+	protected function save()
+	{
+		$this->validate();
+		$zend_db = Database::getConnection();
+		if ($this->getId()) {
+			$zend_db->update($this->tablename, $this->data, "id={$this->getId()}");
+		}
+		else {
+			$zend_db->insert($this->tablename, $this->data);
+			$this->data['id'] = $zend_db->lastInsertId($this->tablename, 'id');
+		}
+	}
+
+	/**
+	 * Removes this record from the database
+	 */
+	protected function delete()
+	{
+		if ($this->getId()) {
+			$zend_db = Database::getConnection();
+			$zend_db->delete($this->tablename, 'id='.$this->getId());
+		}
+	}
+
+	/**
+	 * Returns any field stored in $data
 	 *
-	 * If there is no time information, then the MySQL string will only be a date
+	 * @param string $fieldname
+	 */
+	protected function get($fieldname)
+	{
+		if (isset($this->data[$fieldname])) {
+			return $this->data[$fieldname];
+		}
+	}
+
+	/**
+	 * @param string $fieldname
+	 * @param string $value
+	 */
+	protected function set($fieldname, $value)
+	{
+		$value = trim($value);
+		$this->data[$fieldname] = $value ? $value : null;
+	}
+
+	/**
+	 * Returns the date/time in the desired format
 	 *
-	 * @param array $date
+	 * Format is specified using PHP's date() syntax
+	 * http://www.php.net/manual/en/function.date.php
+	 * If no format is given, the MongoDate object is returned
+	 *
+	 * @param string $field
+	 * @param string $format
+	 * @param DateTimeZone $timezone
 	 * @return string
 	 */
-	public function dateArrayToString(array $date)
+	protected function getDateData($dateField, $format=null, DateTimeZone $timezone=null)
 	{
-		if ($date['year'] && $date['mon'] && $date['mday']) {
-			$dateString = "$date[year]-$date[mon]-$date[mday]";
-
-			if (isset($date['hours']) || isset($date['minutes']) || isset($date['seconds'])) {
-				$time = (isset($date['hours']) && $date['hours']) ? "$date[hours]:" : '00:';
-				$time.= (isset($date['minutes']) && $date['minutes']) ? "$date[minutes]:" : '00:';
-				$time.= (isset($date['seconds']) && $date['seconds']) ? $date['seconds'] : '00';
-
-				$dateString.= " $time";
+		if (isset($this->data[$dateField])) {
+			if ($format) {
+				$date = new DateTime($this->data[$dateField]);
+				if ($timezone) { $date->setTimezone($timezone); }
+				return $date->format($format);
 			}
-			return $dateString;
+			else {
+				return $this->data[$dateField];
+			}
 		}
-		return null;
 	}
 
 	/**
-	 * Converts from a MySQL datetime string into a PHP getdate array
+	 * Sets a date
 	 *
-	 * @param string $string
+	 * Dates should be in something strtotime() understands
+	 * http://www.php.net/manual/en/function.strtotime.php
+	 *
+	 * If we cannot parse the date using strtotime formats,
+	 * we'll try to parse it according to the DATE_FORMAT.
+	 * DATE_FORMAT must be set in configuration.inc
+	 *
+	 * @param string $dateField
+	 * @param string $date
 	 */
-	public function dateStringToArray($string)
+	protected function setDateData($dateField, $date)
 	{
-		if ($string) {
-			$datetime = explode(' ',$string);
-			$date = explode("-",$datetime[0]);
-			$getdate['year'] = $date[0];
-			$getdate['mon'] = $date[1];
-			$getdate['mday'] = $date[2];
-
-			if (isset($datetime[1]) && preg_match('/[\d]*:[\d]{2}:[\d]{2}/',$datetime[1])) {
-				$time = explode(':',$datetime[1]);
-				if ($time[0]!=0 || $time[1]!=0 || $time[2]!=0) {
-					$getdate['hours'] = $time[0];
-					$getdate['minutes'] = $time[1];
-					$getdate['seconds'] = $time[2];
+		$date = trim($date);
+		if ($date) {
+			try {
+				$d = new DateTime($date);
+			}
+			catch (Exception $e) {
+				$d = DateTime::createFromFormat(DATE_FORMAT, $date);
+				if (!$d) {
+					throw new Exception('unknownDateFormat');
 				}
 			}
-			return $getdate;
+			$this->data[$dateField] = $d->format(self::MYSQL_DATE_FORMAT);
 		}
-		return null;
+		else {
+			$this->data[$dateField] = null;
+		}
 	}
 
 	/**
-	 * Converts from a PHP getdate array into a timestamp
+	 * Loads and returns an object for a foreign key _id field
 	 *
-	 * @param array $date
-	 * @return int
+	 * Will cache the object in a private variable to avoid multiple database lookups.
+	 * Make sure to declare a private variable matching the class
+	 *
+	 * @param string $class
+	 * @param string $field
 	 */
-	public function dateArrayToTimestamp(array $date)
+	protected function getForeignKeyObject($class, $field)
 	{
-		$hours = isset($date['hours']) ? $date['hours'] : 0;
-		$minutes = isset($date['minutes']) ? $date['minutes'] : 0;
-		$seconds = isset($date['seconds']) ? $date['seconds'] : 0;
-
-		if ($date['mon'] && $date['mday'] && $date['year']) {
-			return mktime($hours,$minutes,$seconds,$date['mon'],$date['mday'],$date['year']);
+		$var = preg_replace('/_id$/', '', $field);
+		if (!$this->$var && isset($this->data[$field])) {
+			$this->$var = new $class($this->data[$field]);
 		}
+		return $this->$var;
+	}
+
+	/**
+	 * Verifies and saves the ID for a foreign key field
+	 *
+	 * Loads the object record for the foreign key and caches
+	 * the object in a private variable
+	 *
+	 * @param string $class
+	 * @param string $field
+	 * @param string $id
+	 */
+	protected function setForeignKeyField($class, $field, $id)
+	{
+		$id = trim($id);
+		$var = preg_replace('/_id$/', '', $field);
+		if ($id) {
+			$this->$var = new $class($id);
+			$this->data[$field] = $this->$var->getId();
+		}
+		else {
+			$this->$field = null;
+			$this->data[$field] = null;
+		}
+	}
+
+	/**
+	 * Verifies and saves the ID for a foreign key object
+	 *
+	 * Caches the object in a private variable and sets
+	 * the ID value in the data
+	 *
+	 * @param string $class
+	 * @param string $field
+	 * @param Object $object
+	 */
+	protected function setForeignKeyObject($class, $field, $object)
+	{
+		if ($object instanceof $class) {
+			$var = preg_replace('/_id$/', '', $field);
+			$this->data[$field] = $object->getId();
+			$this->$var = $object;
+		}
+	}
+
+	/**
+	 * Returns whether the value can be an ID for a record
+	 *
+	 * return @bool
+	 */
+	public static function isId($id)
+	{
+		return ((is_int($id) && $id>0) || (is_string($id) && ctype_digit($id)));
 	}
 }

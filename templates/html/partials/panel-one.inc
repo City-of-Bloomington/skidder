@@ -1,7 +1,7 @@
 <div id="panel-one">
 <?php
-	if (userHasRole('Administrator')) {
-		include APPLICATION_HOME.'/templates/html/partials/panel-widgets/Administrator.inc';
+	if (userIsAllowed('users')) {
+		include APPLICATION_HOME.'/templates/html/partials/panel-widgets/Admin.inc';
 	}
 ?>
 </div>

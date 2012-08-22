@@ -20,8 +20,8 @@ foreach ($query as $log) {
 	$message = View::escape($log['message']);
 	$request_uri = View::escape($log['request_uri']);
 	echo "
-	<div class=\"interfaceBox\">
-		<h1>$log[timestamp] - $script</h1>
+	<div class=\"entryFullDisplay\">
+		<h2>$log[timestamp] - $script</h2>
 		<p>$request_uri</p>
 		<p>$type</p>
 		<code>

@@ -8,8 +8,7 @@
  */
 echo "<h2>Display By:</h2><ul>";
 $url = new URL($_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']);
-$list = array('script','type','request_uri');
-foreach ($list as $f) {
+foreach (Application::$reportable_entry_fields as $f) {
 	$url->field = $f;
 	echo "<li><a href=\"$url\">$f</a></li>";
 }
@@ -28,11 +27,11 @@ if (!empty($_GET['field'])) {
 		</tr>
 		";
 		foreach ($entries as $entry) {
-			$url = new URL(BASE_URL.'/applications/entries.php');
+			$url = new URL(BASE_URL.'/applications/entries');
 			$url->application_id = $this->application->getId();
 			$url->$field = $entry[$field];
 
-			$deleteURL = new URL(BASE_URL.'/applications/deleteEntries.php');
+			$deleteURL = new URL(BASE_URL.'/applications/deleteEntries');
 			$deleteURL->application_id = $this->application->getId();
 			$deleteURL->$field = $entry[$field];
 			$deleteURL->return_url = $_SERVER['REQUEST_URI'];

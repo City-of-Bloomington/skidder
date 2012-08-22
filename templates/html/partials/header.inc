@@ -1,19 +1,9 @@
-<?php $startTime = microtime(1); ?>
 <head>
-	<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
-	<meta http-equiv="Content-Script-Type" content="text/javascript" />
-	<link rel="SHORTCUT ICON" href="/favicon.ico" />
 	<style type="text/css" media="screen">
-		@import url('<?php echo BASE_URL; ?>/skins/reset.css');
-		@import url('<?php echo BASE_URL; ?>/skins/default/layouts/<?php echo $this->layout; ?>.css');
-		@import url('<?php echo BASE_URL; ?>/skins/default/screen.css');
+		@import url('<?php echo BASE_URL; ?>/skins/local/reset.css');
+		@import url('<?php echo BASE_URL; ?>/skins/local/layouts/<?php echo $this->layout; ?>.css');
+		@import url('<?php echo BASE_URL; ?>/skins/local/screen.css');
 	</style>
-	<style type="text/css" media="print">
-		@import url('<?php echo BASE_URL; ?>/skins/reset.css');
-		@import url('<?php echo BASE_URL; ?>/skins/default/layouts/<?php echo $this->layout; ?>.css');
-		@import url('<?php echo BASE_URL; ?>/skins/default/print.css');
-	</style>
-	<script type="text/javascript" src="<?php echo BASE_URL; ?>/js/functions.js"></script>
 
-	<title>Skidder</title>
+	<title><?php echo APPLICATION_NAME; ?></title>
 </head>
